@@ -1,17 +1,68 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAppData } from "@/contexts/AppContext";
 import { StatCard } from "@/components/StatCard";
-import { formatGHS, formatDate, getCurrentMonthRange, getMonthLabel } from "@/lib/format";
+import { formatGHS, formatDate, getCurrentMonthRange } from "@/lib/format";
 import { IncomeType, INCOME_TYPE_CHART_COLORS, INCOME_TYPES } from "@/types";
 import { Heart, TrendingUp, Users, DollarSign, PiggyBank, BarChart3 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
 } from "recharts";
 
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="glass-card p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-lg" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <Skeleton className="h-8 w-28" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="glass-card p-6 space-y-4">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-[280px] w-full rounded-lg" />
+        </div>
+        <div className="glass-card p-6 space-y-4">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-[280px] w-full rounded-lg" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[1, 2].map((i) => (
+          <div key={i} className="glass-card p-6 space-y-4">
+            <Skeleton className="h-5 w-36" />
+            {Array.from({ length: 3 }).map((_, j) => (
+              <div key={j} className="flex justify-between py-2">
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const { services, income, members } = useAppData();
+  const { services, income } = useAppData();
   const { start, end } = getCurrentMonthRange();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   const monthIncome = useMemo(
     () => income.filter((i) => i.date >= start && i.date <= end),
@@ -27,13 +78,11 @@ export default function Dashboard() {
     [services, start, end]
   );
 
-  // Donut chart data
   const donutData = INCOME_TYPES.map((type) => ({
     name: type,
     value: totalByType(type),
   })).filter((d) => d.value > 0);
 
-  // Line chart — last 6 months
   const lineData = useMemo(() => {
     const months: Record<string, Record<string, number>> = {};
     for (let i = 5; i >= 0; i--) {
@@ -54,9 +103,10 @@ export default function Dashboard() {
   const recentServices = [...services].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
   const recentIncome = [...income].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
 
+  if (loading) return <DashboardSkeleton />;
+
   return (
     <div className="space-y-8 fade-up">
-      {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard icon={<Heart className="w-5 h-5" />} label="Offering" value={totalByType("Offering")} />
         <StatCard icon={<TrendingUp className="w-5 h-5" />} label="Tithes" value={totalByType("Tithe")} />
@@ -66,7 +116,6 @@ export default function Dashboard() {
         <StatCard icon={<Users className="w-5 h-5" />} label="Attendance" value={totalAttendance} prefix="" decimals={0} />
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-lg mb-4">Income Breakdown</h3>
@@ -104,7 +153,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-lg mb-4">Recent Services</h3>
