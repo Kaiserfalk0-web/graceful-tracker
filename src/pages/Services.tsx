@@ -69,7 +69,7 @@ export default function Services() {
       return;
     }
     if (editing) {
-      setServices((prev) => prev.map((s) => (s.id === editing.id ? { ...s, ...result.data, type: result.data.type as ServiceType } : s)));
+      setServices((prev) => prev.map((s) => (s.id === editing.id ? { ...s, date: result.data.date, type: result.data.type as ServiceType, title: result.data.title, preacher: result.data.preacher, attendance: result.data.attendance, notes: result.data.notes } : s)));
       toast({ title: "Service updated" });
     } else {
       setServices((prev) => [...prev, { id: generateId(), ...result.data, type: result.data.type as ServiceType }]);
