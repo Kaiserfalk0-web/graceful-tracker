@@ -7,12 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, Plus, FileText, Users, Church, Wallet } from "lucide-react";
+import { Printer, FileText, Users, Church, Wallet, ClipboardList } from "lucide-react";
 import { useChurchProfile } from "@/hooks/useChurchProfile";
 import { useActivityLog } from "@/hooks/useActivityLog";
 
 type Period = "this_month" | "last_month" | "this_quarter" | "this_year" | "custom";
-type ReportType = "income" | "attendance" | "members" | "contributions";
+type ReportType = "summary" | "income" | "attendance" | "members" | "contributions";
 
 function getPeriodRange(period: Period, customStart: string, customEnd: string) {
   const now = new Date();
@@ -44,6 +44,26 @@ function getPeriodRange(period: Period, customStart: string, customEnd: string) 
   return { start, end };
 }
 
+function getPeriodLabel(period: Period, start: string, end: string) {
+  const now = new Date();
+  switch (period) {
+    case "this_month":
+      return now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    case "last_month": {
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return prev.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    }
+    case "this_quarter": {
+      const q = Math.floor(now.getMonth() / 3) + 1;
+      return `Q${q} ${now.getFullYear()}`;
+    }
+    case "this_year":
+      return `Year ${now.getFullYear()}`;
+    case "custom":
+      return `${formatDate(start)} – ${formatDate(end)}`;
+  }
+}
+
 export default function Reports() {
   const { income, services, members } = useAppData();
   const { profile } = useChurchProfile();
@@ -51,9 +71,10 @@ export default function Reports() {
   const [period, setPeriod] = useState<Period>("this_month");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
-  const [activeTab, setActiveTab] = useState<ReportType>("income");
+  const [activeTab, setActiveTab] = useState<ReportType>("summary");
 
   const { start, end } = getPeriodRange(period, customStart, customEnd);
+  const periodLabel = getPeriodLabel(period, start, end);
 
   const periodIncome = useMemo(
     () => income.filter((i) => i.date >= start && i.date <= end),
@@ -91,6 +112,20 @@ export default function Reports() {
     });
     return Object.values(map).sort((a, b) => b.total - a.total).slice(0, 10);
   }, [periodIncome]);
+
+  // Group services by type for summary
+  const servicesByType = useMemo(() => {
+    const map: Record<string, { count: number; totalAtt: number }> = {};
+    periodServices.forEach((s) => {
+      if (!map[s.type]) map[s.type] = { count: 0, totalAtt: 0 };
+      map[s.type].count++;
+      map[s.type].totalAtt += s.attendance;
+    });
+    return Object.entries(map).sort((a, b) => b[1].totalAtt - a[1].totalAtt);
+  }, [periodServices]);
+
+  const churchName = profile.churchName || "GraceTrack Church";
+  const pastorName = profile.pastorName || "Admin";
 
   return (
     <div className="space-y-6 fade-up">
@@ -131,14 +166,21 @@ export default function Reports() {
 
       {/* Print header */}
       <div className="hidden print-only">
-        <h1 className="text-2xl font-display font-bold text-center mb-1">{profile.churchName || "GraceTrack Church"} — Report</h1>
-        <p className="text-center text-sm mb-1">{start} — {end}</p>
-        {profile.pastorName && <p className="text-center text-xs text-muted-foreground mb-4">Prepared by: {profile.pastorName}</p>}
+        <h1 className="text-2xl font-display font-bold text-center mb-1">{churchName}</h1>
+        <p className="text-center text-base font-semibold mb-1">
+          {activeTab === "summary" ? "Pastor's Monthly Summary" : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Report`}
+        </p>
+        <p className="text-center text-sm mb-1">{periodLabel}</p>
+        <p className="text-center text-xs text-muted-foreground mb-4">Prepared for: Pastor {pastorName}</p>
       </div>
 
       {/* Report tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReportType)} className="no-print">
-        <TabsList className="grid grid-cols-4 w-full max-w-lg">
+        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+          <TabsTrigger value="summary" className="gap-1.5">
+            <ClipboardList className="w-4 h-4" />
+            <span className="hidden sm:inline">Summary</span>
+          </TabsTrigger>
           <TabsTrigger value="income" className="gap-1.5">
             <Wallet className="w-4 h-4" />
             <span className="hidden sm:inline">Income</span>
@@ -158,7 +200,182 @@ export default function Reports() {
         </TabsList>
       </Tabs>
 
-      {/* Income Summary (always visible on print, tab-controlled on screen) */}
+      {/* ========== PASTOR'S MONTHLY SUMMARY ========== */}
+      <div className={activeTab !== "summary" ? "hidden print-only" : ""}>
+        <div className="glass-card p-6 mb-4">
+          <h2 className="font-display font-bold text-xl mb-1">{churchName}</h2>
+          <h3 className="font-display font-semibold text-lg text-primary mb-1">Pastor's Monthly Summary — {periodLabel}</h3>
+          <p className="text-sm text-muted-foreground">Prepared for Pastor {pastorName} · Generated {formatDate(new Date().toISOString().slice(0, 10))}</p>
+        </div>
+
+        {/* Key Highlights */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+          <div className="glass-card p-4 text-center">
+            <p className="text-2xl font-display font-bold text-primary">{formatGHS(grandTotal)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Total Income</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <p className="text-2xl font-display font-bold text-primary">{periodServices.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">Services Held</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <p className="text-2xl font-display font-bold text-primary">{avgAttendance}</p>
+            <p className="text-xs text-muted-foreground mt-1">Avg Attendance</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <p className="text-2xl font-display font-bold text-primary">{periodMembers.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">New Members</p>
+          </div>
+        </div>
+
+        {/* Income Breakdown */}
+        <div className="glass-card overflow-hidden mb-4">
+          <div className="p-4 border-b border-border">
+            <h3 className="font-display font-semibold text-base">Income Breakdown</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-3 font-medium">Type</th>
+                  <th className="text-right p-3 font-medium">Amount</th>
+                  <th className="text-right p-3 font-medium">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {incomeByType.filter(r => r.total > 0).map((row) => (
+                  <tr key={row.type} className="border-b border-border/50">
+                    <td className="p-3">{row.type}</td>
+                    <td className="p-3 text-right">{formatGHS(row.total)}</td>
+                    <td className="p-3 text-right">{row.pct}%</td>
+                  </tr>
+                ))}
+                <tr className="bg-muted/20 font-semibold">
+                  <td className="p-3">Total</td>
+                  <td className="p-3 text-right">{formatGHS(grandTotal)}</td>
+                  <td className="p-3 text-right">100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Service Attendance by Type */}
+        {servicesByType.length > 0 && (
+          <div className="glass-card overflow-hidden mb-4">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-display font-semibold text-base">Attendance by Service Type</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left p-3 font-medium">Service Type</th>
+                    <th className="text-right p-3 font-medium">Services</th>
+                    <th className="text-right p-3 font-medium">Total Att.</th>
+                    <th className="text-right p-3 font-medium">Avg Att.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {servicesByType.map(([type, data]) => (
+                    <tr key={type} className="border-b border-border/50">
+                      <td className="p-3">{type}</td>
+                      <td className="p-3 text-right">{data.count}</td>
+                      <td className="p-3 text-right">{data.totalAtt}</td>
+                      <td className="p-3 text-right">{Math.round(data.totalAtt / data.count)}</td>
+                    </tr>
+                  ))}
+                  <tr className="bg-muted/20 font-semibold">
+                    <td className="p-3">Total</td>
+                    <td className="p-3 text-right">{periodServices.length}</td>
+                    <td className="p-3 text-right">{totalAttendance}</td>
+                    <td className="p-3 text-right">{avgAttendance}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Top Contributors in Summary */}
+        {topContributors.length > 0 && (
+          <div className="glass-card overflow-hidden mb-4">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-display font-semibold text-base">Top Contributors</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left p-3 font-medium">#</th>
+                    <th className="text-left p-3 font-medium">Member</th>
+                    <th className="text-right p-3 font-medium">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topContributors.slice(0, 5).map((c, i) => (
+                    <tr key={c.name} className="border-b border-border/50">
+                      <td className="p-3">{i + 1}</td>
+                      <td className="p-3 font-medium">{c.name}</td>
+                      <td className="p-3 text-right">{formatGHS(c.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* New Members */}
+        {periodMembers.length > 0 && (
+          <div className="glass-card overflow-hidden mb-4">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-display font-semibold text-base">New Members ({periodMembers.length})</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left p-3 font-medium">Name</th>
+                    <th className="text-left p-3 font-medium">Phone</th>
+                    <th className="text-left p-3 font-medium">Joined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {periodMembers.map((m) => (
+                    <tr key={m.id} className="border-b border-border/50">
+                      <td className="p-3 font-medium">{m.fullName}</td>
+                      <td className="p-3">{m.phone}</td>
+                      <td className="p-3">{formatDate(m.dateJoined)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Membership Overview */}
+        <div className="glass-card p-4">
+          <h3 className="font-display font-semibold text-base mb-3">Membership Overview</h3>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-xl font-bold text-primary">{members.length}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-primary">{members.filter(m => m.active).length}</p>
+              <p className="text-xs text-muted-foreground">Active</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-primary">{members.filter(m => !m.active).length}</p>
+              <p className="text-xs text-muted-foreground">Inactive</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========== INCOME TAB ========== */}
       <div className={activeTab !== "income" ? "hidden print-only" : ""}>
         <div className="glass-card overflow-hidden">
           <div className="p-4 border-b border-border">
@@ -191,7 +408,6 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Individual income records */}
         {periodIncome.length > 0 && (
           <div className="glass-card overflow-hidden mt-4">
             <div className="p-4 border-b border-border">
@@ -225,7 +441,7 @@ export default function Reports() {
         )}
       </div>
 
-      {/* Attendance Summary */}
+      {/* ========== ATTENDANCE TAB ========== */}
       <div className={activeTab !== "attendance" ? "hidden print-only" : ""}>
         <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-lg mb-4">Attendance Summary</h3>
@@ -245,7 +461,6 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Service records list */}
         {periodServices.length > 0 && (
           <div className="glass-card overflow-hidden mt-4">
             <div className="p-4 border-b border-border">
@@ -279,7 +494,7 @@ export default function Reports() {
         )}
       </div>
 
-      {/* Members Report */}
+      {/* ========== MEMBERS TAB ========== */}
       <div className={activeTab !== "members" ? "hidden print-only" : ""}>
         <div className="glass-card p-6">
           <h3 className="font-display font-semibold text-lg mb-4">Members Report</h3>
@@ -299,7 +514,6 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* New members in period */}
         {periodMembers.length > 0 && (
           <div className="glass-card overflow-hidden mt-4">
             <div className="p-4 border-b border-border">
@@ -330,7 +544,6 @@ export default function Reports() {
           </div>
         )}
 
-        {/* Full member roster */}
         <div className="glass-card overflow-hidden mt-4">
           <div className="p-4 border-b border-border">
             <h3 className="font-display font-semibold text-lg">Full Roster ({members.length})</h3>
@@ -362,7 +575,7 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Top Contributors */}
+      {/* ========== CONTRIBUTORS TAB ========== */}
       <div className={activeTab !== "contributions" ? "hidden print-only" : ""}>
         {topContributors.length > 0 ? (
           <div className="glass-card overflow-hidden">
@@ -391,8 +604,8 @@ export default function Reports() {
             </div>
           </div>
         ) : (
-          <div className="glass-card p-12 text-center">
-            <p className="text-muted-foreground">No member contributions found for this period</p>
+          <div className="glass-card p-8 text-center text-muted-foreground">
+            No member contributions recorded for this period.
           </div>
         )}
       </div>
