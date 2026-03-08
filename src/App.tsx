@@ -10,6 +10,7 @@ import Services from "@/pages/Services";
 import Finances from "@/pages/Finances";
 import Members from "@/pages/Members";
 import Reports from "@/pages/Reports";
+import Profile from "@/pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
