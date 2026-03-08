@@ -66,7 +66,9 @@ export default function Members() {
 
   const confirmDelete = () => {
     if (!deleteId) return;
+    const member = members.find((m) => m.id === deleteId);
     setMembers((prev) => prev.filter((m) => m.id !== deleteId));
+    addEntry(`Removed member: ${member?.fullName || "Unknown"}`, "member");
     toast({ title: "Member removed" });
     setDeleteId(null);
   };

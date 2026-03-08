@@ -154,7 +154,9 @@ export default function Finances() {
 
   const confirmDelete = () => {
     if (!deleteId) return;
+    const rec = income.find((i) => i.id === deleteId);
     setIncome((prev) => prev.filter((i) => i.id !== deleteId));
+    addEntry(`Deleted ${rec?.type || "income"} record`, "finance");
     toast({ title: "Income deleted" });
     setDeleteId(null);
   };

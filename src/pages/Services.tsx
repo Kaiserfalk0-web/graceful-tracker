@@ -85,7 +85,9 @@ export default function Services() {
 
   const confirmDelete = () => {
     if (!deleteId) return;
+    const svc = services.find((s) => s.id === deleteId);
     setServices((prev) => prev.filter((s) => s.id !== deleteId));
+    addEntry(`Deleted service: ${svc?.title || "Unknown"}`, "service");
     toast({ title: "Service deleted" });
     setDeleteId(null);
   };
