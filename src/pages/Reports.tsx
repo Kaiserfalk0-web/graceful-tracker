@@ -46,6 +46,8 @@ function getPeriodRange(period: Period, customStart: string, customEnd: string) 
 
 export default function Reports() {
   const { income, services, members } = useAppData();
+  const { profile } = useChurchProfile();
+  const { addEntry } = useActivityLog();
   const [period, setPeriod] = useState<Period>("this_month");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
