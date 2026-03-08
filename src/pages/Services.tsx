@@ -72,10 +72,12 @@ export default function Services() {
     }
     if (editing) {
       setServices((prev) => prev.map((s) => (s.id === editing.id ? { ...s, date: result.data.date, type: result.data.type as ServiceType, title: result.data.title, preacher: result.data.preacher, attendance: result.data.attendance, notes: result.data.notes } : s)));
+      addEntry(`Updated service: ${result.data.title}`, "service");
       toast({ title: "Service updated" });
     } else {
       const d = result.data;
       setServices((prev) => [...prev, { id: generateId(), date: d.date, type: d.type as ServiceType, title: d.title, preacher: d.preacher, attendance: d.attendance, notes: d.notes }]);
+      addEntry(`Added service: ${d.title}`, "service");
       toast({ title: "Service added" });
     }
     setPanelOpen(false);
