@@ -54,9 +54,11 @@ export default function Members() {
 
     if (editing) {
       setMembers((prev) => prev.map((m) => (m.id === editing.id ? { ...m, ...form } : m)));
+      addEntry(`Updated member: ${form.fullName}`, "member");
       toast({ title: "Member updated" });
     } else {
       setMembers((prev) => [...prev, { id: generateId(), ...form }]);
+      addEntry(`Added new member: ${form.fullName}`, "member");
       toast({ title: "Member added" });
     }
     setPanelOpen(false);
