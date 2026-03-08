@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLog } from "@/hooks/useActivityLog";
 
 const emptyForm = { fullName: "", phone: "", email: "", dateJoined: "", active: true, notes: "" };
 
