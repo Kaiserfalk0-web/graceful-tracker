@@ -30,6 +30,7 @@ const emptyForm: IncomeForm = { date: "", type: "Offering", amount: 0, serviceId
 export default function Finances() {
   const { income, setIncome, services, members } = useAppData();
   const { toast } = useToast();
+  const { addEntry } = useActivityLog();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [panelOpen, setPanelOpen] = useState(false);
