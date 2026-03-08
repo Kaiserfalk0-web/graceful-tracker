@@ -142,9 +142,11 @@ export default function Finances() {
 
     if (editing) {
       setIncome((prev) => prev.map((i) => (i.id === editing.id ? record : i)));
+      addEntry(`Updated ${form.type} record`, "finance", `${formatGHS(amount)}`);
       toast({ title: "Income updated" });
     } else {
       setIncome((prev) => [...prev, record]);
+      addEntry(`Added ${form.type} record`, "finance", `${formatGHS(amount)}`);
       toast({ title: "Income added" });
     }
     setPanelOpen(false);
