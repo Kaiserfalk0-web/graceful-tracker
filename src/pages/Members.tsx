@@ -18,6 +18,7 @@ const emptyForm = { fullName: "", phone: "", email: "", dateJoined: "", active: 
 export default function Members() {
   const { members, setMembers } = useAppData();
   const { toast } = useToast();
+  const { addEntry } = useActivityLog();
   const [search, setSearch] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [editing, setEditing] = useState<Member | null>(null);
