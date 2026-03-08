@@ -121,7 +121,10 @@ export default function Reports() {
             </div>
           </>
         )}
-        <Button variant="outline" onClick={() => window.print()}>
+        <Button variant="outline" onClick={() => {
+          addEntry(`Printed ${activeTab} report (${period})`, "report");
+          window.print();
+        }}>
           <Printer className="w-4 h-4 mr-2" />Print Report
         </Button>
       </div>
