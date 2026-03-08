@@ -9,6 +9,7 @@ import {
   Cross,
 } from "lucide-react";
 import { useAppData } from "@/contexts/AppContext";
+import { useChurchProfile } from "@/hooks/useChurchProfile";
 import { cn } from "@/lib/utils";
 
 const links = [
