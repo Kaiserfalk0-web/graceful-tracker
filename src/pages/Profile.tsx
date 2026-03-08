@@ -1,33 +1,13 @@
 import { useState } from "react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Church, Save, User } from "lucide-react";
-
-interface ChurchProfile {
-  churchName: string;
-  pastorName: string;
-  phone: string;
-  email: string;
-  address: string;
-  denomination: string;
-  website: string;
-  about: string;
-}
-
-const defaultProfile: ChurchProfile = {
-  churchName: "GraceTrack Church",
-  pastorName: "",
-  phone: "",
-  email: "",
-  address: "",
-  denomination: "",
-  website: "",
-  about: "",
-};
+import { Church, Save, User, History } from "lucide-react";
+import { useChurchProfile, ChurchProfile } from "@/hooks/useChurchProfile";
+import { useActivityLog } from "@/hooks/useActivityLog";
+import { formatDate } from "@/lib/format";
 
 export default function Profile() {
   const [saved, setSaved] = useLocalStorage<ChurchProfile>("gracetrack_profile", defaultProfile);
