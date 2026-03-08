@@ -23,6 +23,7 @@ const links = [
 
 export function AppSidebar() {
   const { members } = useAppData();
+  const { profile } = useChurchProfile();
 
   return (
     <>
