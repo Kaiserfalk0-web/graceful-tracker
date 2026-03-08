@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLog } from "@/hooks/useActivityLog";
 import { z } from "zod";
 
 const serviceSchema = z.object({
@@ -26,6 +27,7 @@ const emptyForm = { date: "", type: "" as ServiceType, title: "", preacher: "", 
 export default function Services() {
   const { services, setServices, income } = useAppData();
   const { toast } = useToast();
+  const { addEntry } = useActivityLog();
   const [search, setSearch] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
@@ -70,10 +72,12 @@ export default function Services() {
     }
     if (editing) {
       setServices((prev) => prev.map((s) => (s.id === editing.id ? { ...s, date: result.data.date, type: result.data.type as ServiceType, title: result.data.title, preacher: result.data.preacher, attendance: result.data.attendance, notes: result.data.notes } : s)));
+      addEntry(`Updated service: ${result.data.title}`, "service");
       toast({ title: "Service updated" });
     } else {
       const d = result.data;
       setServices((prev) => [...prev, { id: generateId(), date: d.date, type: d.type as ServiceType, title: d.title, preacher: d.preacher, attendance: d.attendance, notes: d.notes }]);
+      addEntry(`Added service: ${d.title}`, "service");
       toast({ title: "Service added" });
     }
     setPanelOpen(false);
@@ -81,7 +85,9 @@ export default function Services() {
 
   const confirmDelete = () => {
     if (!deleteId) return;
+    const svc = services.find((s) => s.id === deleteId);
     setServices((prev) => prev.filter((s) => s.id !== deleteId));
+    addEntry(`Deleted service: ${svc?.title || "Unknown"}`, "service");
     toast({ title: "Service deleted" });
     setDeleteId(null);
   };

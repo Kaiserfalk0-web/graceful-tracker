@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, Trash2, X, Download, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLog } from "@/hooks/useActivityLog";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface IncomeForm {
@@ -29,6 +30,7 @@ const emptyForm: IncomeForm = { date: "", type: "Offering", amount: 0, serviceId
 export default function Finances() {
   const { income, setIncome, services, members } = useAppData();
   const { toast } = useToast();
+  const { addEntry } = useActivityLog();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [panelOpen, setPanelOpen] = useState(false);
@@ -140,9 +142,11 @@ export default function Finances() {
 
     if (editing) {
       setIncome((prev) => prev.map((i) => (i.id === editing.id ? record : i)));
+      addEntry(`Updated ${form.type} record`, "finance", `${formatGHS(amount)}`);
       toast({ title: "Income updated" });
     } else {
       setIncome((prev) => [...prev, record]);
+      addEntry(`Added ${form.type} record`, "finance", `${formatGHS(amount)}`);
       toast({ title: "Income added" });
     }
     setPanelOpen(false);
@@ -150,7 +154,9 @@ export default function Finances() {
 
   const confirmDelete = () => {
     if (!deleteId) return;
+    const rec = income.find((i) => i.id === deleteId);
     setIncome((prev) => prev.filter((i) => i.id !== deleteId));
+    addEntry(`Deleted ${rec?.type || "income"} record`, "finance");
     toast({ title: "Income deleted" });
     setDeleteId(null);
   };

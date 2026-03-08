@@ -11,12 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLog } from "@/hooks/useActivityLog";
 
 const emptyForm = { fullName: "", phone: "", email: "", dateJoined: "", active: true, notes: "" };
 
 export default function Members() {
   const { members, setMembers } = useAppData();
   const { toast } = useToast();
+  const { addEntry } = useActivityLog();
   const [search, setSearch] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [editing, setEditing] = useState<Member | null>(null);
@@ -52,9 +54,11 @@ export default function Members() {
 
     if (editing) {
       setMembers((prev) => prev.map((m) => (m.id === editing.id ? { ...m, ...form } : m)));
+      addEntry(`Updated member: ${form.fullName}`, "member");
       toast({ title: "Member updated" });
     } else {
       setMembers((prev) => [...prev, { id: generateId(), ...form }]);
+      addEntry(`Added new member: ${form.fullName}`, "member");
       toast({ title: "Member added" });
     }
     setPanelOpen(false);
@@ -62,7 +66,9 @@ export default function Members() {
 
   const confirmDelete = () => {
     if (!deleteId) return;
+    const member = members.find((m) => m.id === deleteId);
     setMembers((prev) => prev.filter((m) => m.id !== deleteId));
+    addEntry(`Removed member: ${member?.fullName || "Unknown"}`, "member");
     toast({ title: "Member removed" });
     setDeleteId(null);
   };

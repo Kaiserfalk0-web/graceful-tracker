@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Printer, Plus, FileText, Users, Church, Wallet } from "lucide-react";
+import { useChurchProfile } from "@/hooks/useChurchProfile";
+import { useActivityLog } from "@/hooks/useActivityLog";
 
 type Period = "this_month" | "last_month" | "this_quarter" | "this_year" | "custom";
 type ReportType = "income" | "attendance" | "members" | "contributions";
@@ -44,6 +46,8 @@ function getPeriodRange(period: Period, customStart: string, customEnd: string) 
 
 export default function Reports() {
   const { income, services, members } = useAppData();
+  const { profile } = useChurchProfile();
+  const { addEntry } = useActivityLog();
   const [period, setPeriod] = useState<Period>("this_month");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -117,15 +121,19 @@ export default function Reports() {
             </div>
           </>
         )}
-        <Button variant="outline" onClick={() => window.print()}>
+        <Button variant="outline" onClick={() => {
+          addEntry(`Printed ${activeTab} report (${period})`, "report");
+          window.print();
+        }}>
           <Printer className="w-4 h-4 mr-2" />Print Report
         </Button>
       </div>
 
       {/* Print header */}
       <div className="hidden print-only">
-        <h1 className="text-2xl font-display font-bold text-center mb-1">GraceTrack Church Report</h1>
-        <p className="text-center text-sm mb-4">{start} — {end}</p>
+        <h1 className="text-2xl font-display font-bold text-center mb-1">{profile.churchName || "GraceTrack Church"} — Report</h1>
+        <p className="text-center text-sm mb-1">{start} — {end}</p>
+        {profile.pastorName && <p className="text-center text-xs text-muted-foreground mb-4">Prepared by: {profile.pastorName}</p>}
       </div>
 
       {/* Report tabs */}

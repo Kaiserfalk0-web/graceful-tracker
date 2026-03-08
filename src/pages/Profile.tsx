@@ -1,36 +1,17 @@
 import { useState } from "react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Church, Save, User } from "lucide-react";
-
-interface ChurchProfile {
-  churchName: string;
-  pastorName: string;
-  phone: string;
-  email: string;
-  address: string;
-  denomination: string;
-  website: string;
-  about: string;
-}
-
-const defaultProfile: ChurchProfile = {
-  churchName: "GraceTrack Church",
-  pastorName: "",
-  phone: "",
-  email: "",
-  address: "",
-  denomination: "",
-  website: "",
-  about: "",
-};
+import { Church, Save, User, History } from "lucide-react";
+import { useChurchProfile, ChurchProfile } from "@/hooks/useChurchProfile";
+import { useActivityLog } from "@/hooks/useActivityLog";
+import { formatDate } from "@/lib/format";
 
 export default function Profile() {
-  const [saved, setSaved] = useLocalStorage<ChurchProfile>("gracetrack_profile", defaultProfile);
+  const { profile: saved, setProfile: setSaved } = useChurchProfile();
+  const { log, addEntry } = useActivityLog();
   const [form, setForm] = useState<ChurchProfile>(saved);
   const { toast } = useToast();
 
@@ -38,6 +19,7 @@ export default function Profile() {
 
   const handleSave = () => {
     setSaved(form);
+    addEntry("Updated church profile", "profile");
     toast({ title: "Profile saved" });
   };
 
@@ -112,6 +94,37 @@ export default function Profile() {
       <Button onClick={handleSave} className="w-full sm:w-auto">
         <Save className="w-4 h-4 mr-2" />Save Profile
       </Button>
+
+      {/* Activity Log */}
+      <div className="glass-card overflow-hidden">
+        <div className="p-4 border-b border-border flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <History className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-display font-semibold text-lg">Activity Log</h3>
+            <p className="text-sm text-muted-foreground">Recent changes and actions</p>
+          </div>
+        </div>
+        <div className="divide-y divide-border max-h-80 overflow-y-auto">
+          {log.length === 0 ? (
+            <p className="p-6 text-center text-muted-foreground text-sm">No activity yet</p>
+          ) : (
+            log.slice(0, 50).map((entry) => (
+              <div key={entry.id} className="px-4 py-3 flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{entry.action}</p>
+                  {entry.detail && <p className="text-xs text-muted-foreground truncate">{entry.detail}</p>}
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs text-muted-foreground">{entry.user}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }
