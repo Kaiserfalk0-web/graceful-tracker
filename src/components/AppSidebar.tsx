@@ -34,7 +34,7 @@ export function AppSidebar() {
             <Cross className="w-5 h-5 text-sidebar-primary" />
           </div>
           <div>
-            <h1 className="font-display text-lg font-bold text-sidebar-accent-foreground">GraceTrack</h1>
+            <h1 className="font-display text-lg font-bold text-sidebar-accent-foreground truncate">{profile.churchName || "GraceTrack"}</h1>
             <p className="text-xs text-sidebar-foreground/60">Church Management</p>
           </div>
         </div>

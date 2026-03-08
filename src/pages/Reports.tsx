@@ -131,8 +131,9 @@ export default function Reports() {
 
       {/* Print header */}
       <div className="hidden print-only">
-        <h1 className="text-2xl font-display font-bold text-center mb-1">GraceTrack Church Report</h1>
-        <p className="text-center text-sm mb-4">{start} — {end}</p>
+        <h1 className="text-2xl font-display font-bold text-center mb-1">{profile.churchName || "GraceTrack Church"} — Report</h1>
+        <p className="text-center text-sm mb-1">{start} — {end}</p>
+        {profile.pastorName && <p className="text-center text-xs text-muted-foreground mb-4">Prepared by: {profile.pastorName}</p>}
       </div>
 
       {/* Report tabs */}
