@@ -5,6 +5,7 @@ import {
   Wallet,
   Users,
   FileBarChart,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ const links = [
   { to: "/finances", label: "Finances", icon: Wallet },
   { to: "/members", label: "Members", icon: Users },
   { to: "/reports", label: "Reports", icon: FileBarChart },
+  { to: "/profile", label: "Profile", icon: UserCircle },
 ];
 
 export function MobileTabBar() {
