@@ -313,6 +313,9 @@ export default function Finances() {
         </TabsContent>
 
         <TabsContent value="contributions" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={exportContributionsCSV}><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+          </div>
           <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
