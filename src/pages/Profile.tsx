@@ -94,6 +94,37 @@ export default function Profile() {
       <Button onClick={handleSave} className="w-full sm:w-auto">
         <Save className="w-4 h-4 mr-2" />Save Profile
       </Button>
+
+      {/* Activity Log */}
+      <div className="glass-card overflow-hidden">
+        <div className="p-4 border-b border-border flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <History className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-display font-semibold text-lg">Activity Log</h3>
+            <p className="text-sm text-muted-foreground">Recent changes and actions</p>
+          </div>
+        </div>
+        <div className="divide-y divide-border max-h-80 overflow-y-auto">
+          {log.length === 0 ? (
+            <p className="p-6 text-center text-muted-foreground text-sm">No activity yet</p>
+          ) : (
+            log.slice(0, 50).map((entry) => (
+              <div key={entry.id} className="px-4 py-3 flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{entry.action}</p>
+                  {entry.detail && <p className="text-xs text-muted-foreground truncate">{entry.detail}</p>}
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs text-muted-foreground">{entry.user}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }
