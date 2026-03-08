@@ -5,6 +5,7 @@ import {
   Wallet,
   Users,
   FileBarChart,
+  UserCircle,
   Cross,
 } from "lucide-react";
 import { useAppData } from "@/contexts/AppContext";
@@ -16,6 +17,7 @@ const links = [
   { to: "/finances", label: "Finances", icon: Wallet },
   { to: "/members", label: "Members", icon: Users },
   { to: "/reports", label: "Reports", icon: FileBarChart },
+  { to: "/profile", label: "Profile", icon: UserCircle },
 ];
 
 export function AppSidebar() {

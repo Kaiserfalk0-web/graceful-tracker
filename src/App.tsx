@@ -10,6 +10,7 @@ import Services from "@/pages/Services";
 import Finances from "@/pages/Finances";
 import Members from "@/pages/Members";
 import Reports from "@/pages/Reports";
+import Profile from "@/pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/finances" element={<Finances />} />
               <Route path="/members" element={<Members />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/profile" element={<Profile />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
