@@ -349,6 +349,9 @@ export default function Finances() {
         </TabsContent>
 
         <TabsContent value="benmp" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={exportBENMPCSV}><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+          </div>
           {benmpMonthly.length > 0 && (
             <div className="glass-card p-6">
               <h3 className="font-display font-semibold text-lg mb-4">Monthly BENMP</h3>
