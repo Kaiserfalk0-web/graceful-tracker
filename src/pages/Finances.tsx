@@ -155,18 +155,47 @@ export default function Finances() {
     setDeleteId(null);
   };
 
-  const exportCSV = () => {
-    const rows = [
-      ["Date", "Type", "Amount", "Recorded By", "Notes"],
-      ...filtered.map((i) => [i.date, i.type, i.amount.toFixed(2), i.recordedBy, i.notes]),
-    ];
-    const csv = rows.map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+  const escapeCSV = (val: string | number) => {
+    const s = String(val);
+    return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const downloadCSV = (rows: (string | number)[][], filename: string) => {
+    const csv = rows.map((r) => r.map(escapeCSV).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "gracetrack-income.csv";
+    a.download = filename;
     a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportCSV = () => {
+    const header = ["Date", "Type", "Amount (GHS)", "Linked Service", "Recorded By", "Notes", "Member Contributions"];
+    const rows = filtered.map((i) => {
+      const svc = services.find((s) => s.id === i.serviceId);
+      const contribs = i.memberContributions?.map((c) => `${c.memberName}: ${c.amount.toFixed(2)}`).join("; ") || "";
+      return [i.date, i.type, i.amount.toFixed(2), svc ? `${formatDate(svc.date)} - ${svc.title}` : "", i.recordedBy, i.notes, contribs];
+    });
+    downloadCSV([header, ...rows], "gracetrack-income.csv");
+  };
+
+  const exportContributionsCSV = () => {
+    const header = ["Member", "Tithe (GHS)", "Fundraising (GHS)", "BENMP (GHS)", "Other (GHS)", "Total (GHS)", "Last Contributed"];
+    const rows = memberContributionsSummary.map((m) => [
+      m.name, m.Tithe.toFixed(2), m.Fundraising.toFixed(2), m.BENMP.toFixed(2), m.Other.toFixed(2), m.total.toFixed(2), m.lastDate,
+    ]);
+    downloadCSV([header, ...rows], "gracetrack-member-contributions.csv");
+  };
+
+  const exportBENMPCSV = () => {
+    const benmpRecords = income.filter((i) => i.type === "BENMP").sort((a, b) => b.date.localeCompare(a.date));
+    const header = ["Date", "Amount (GHS)", "Members"];
+    const rows = benmpRecords.map((i) => [
+      i.date, i.amount.toFixed(2), i.memberContributions?.map((c) => `${c.memberName}: ${c.amount.toFixed(2)}`).join("; ") || "",
+    ]);
+    downloadCSV([header, ...rows], "gracetrack-benmp.csv");
   };
 
   // Member contributions aggregated
@@ -284,6 +313,9 @@ export default function Finances() {
         </TabsContent>
 
         <TabsContent value="contributions" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={exportContributionsCSV}><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+          </div>
           <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -317,6 +349,9 @@ export default function Finances() {
         </TabsContent>
 
         <TabsContent value="benmp" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={exportBENMPCSV}><Download className="w-4 h-4 mr-2" />Export CSV</Button>
+          </div>
           {benmpMonthly.length > 0 && (
             <div className="glass-card p-6">
               <h3 className="font-display font-semibold text-lg mb-4">Monthly BENMP</h3>
