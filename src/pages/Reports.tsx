@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Printer, Plus, FileText, Users, Church, Wallet } from "lucide-react";
+import { useChurchProfile } from "@/hooks/useChurchProfile";
+import { useActivityLog } from "@/hooks/useActivityLog";
 
 type Period = "this_month" | "last_month" | "this_quarter" | "this_year" | "custom";
 type ReportType = "income" | "attendance" | "members" | "contributions";
