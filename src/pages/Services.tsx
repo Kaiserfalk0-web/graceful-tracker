@@ -27,6 +27,7 @@ const emptyForm = { date: "", type: "" as ServiceType, title: "", preacher: "", 
 export default function Services() {
   const { services, setServices, income } = useAppData();
   const { toast } = useToast();
+  const { addEntry } = useActivityLog();
   const [search, setSearch] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [editing, setEditing] = useState<Service | null>(null);
