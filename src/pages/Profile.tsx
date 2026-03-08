@@ -10,7 +10,8 @@ import { useActivityLog } from "@/hooks/useActivityLog";
 import { formatDate } from "@/lib/format";
 
 export default function Profile() {
-  const [saved, setSaved] = useLocalStorage<ChurchProfile>("gracetrack_profile", defaultProfile);
+  const { profile: saved, setProfile: setSaved } = useChurchProfile();
+  const { log, addEntry } = useActivityLog();
   const [form, setForm] = useState<ChurchProfile>(saved);
   const { toast } = useToast();
 
@@ -18,6 +19,7 @@ export default function Profile() {
 
   const handleSave = () => {
     setSaved(form);
+    addEntry("Updated church profile", "profile");
     toast({ title: "Profile saved" });
   };
 
