@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, FileText, Users, Church, Wallet, ClipboardList } from "lucide-react";
+import { Printer, FileText, Users, Church, Wallet, ClipboardList, ArrowLeftRight } from "lucide-react";
 import { useChurchProfile } from "@/hooks/useChurchProfile";
 import { useActivityLog } from "@/hooks/useActivityLog";
 
