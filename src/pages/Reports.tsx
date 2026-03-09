@@ -124,6 +124,46 @@ export default function Reports() {
     return Object.entries(map).sort((a, b) => b[1].totalAtt - a[1].totalAtt);
   }, [periodServices]);
 
+  // ===== Comparison: This Month vs Last Month =====
+  const compData = useMemo(() => {
+    const now = new Date();
+    const tmStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const tmEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+    const lmStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
+    const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
+
+    const tmIncome = income.filter((i) => i.date >= tmStart && i.date <= tmEnd);
+    const lmIncome = income.filter((i) => i.date >= lmStart && i.date <= lmEnd);
+    const tmServices = services.filter((s) => s.date >= tmStart && s.date <= tmEnd);
+    const lmServices = services.filter((s) => s.date >= lmStart && s.date <= lmEnd);
+    const tmMembers = members.filter((m) => m.dateJoined >= tmStart && m.dateJoined <= tmEnd);
+    const lmMembers = members.filter((m) => m.dateJoined >= lmStart && m.dateJoined <= lmEnd);
+
+    const tmTotal = tmIncome.reduce((s, i) => s + i.amount, 0);
+    const lmTotal = lmIncome.reduce((s, i) => s + i.amount, 0);
+    const tmAtt = tmServices.length > 0 ? Math.round(tmServices.reduce((s, sv) => s + sv.attendance, 0) / tmServices.length) : 0;
+    const lmAtt = lmServices.length > 0 ? Math.round(lmServices.reduce((s, sv) => s + sv.attendance, 0) / lmServices.length) : 0;
+
+    const tmLabel = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const lmDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lmLabel = lmDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+    const incomeBreakdown = INCOME_TYPES.map((type) => ({
+      type,
+      thisMonth: tmIncome.filter((i) => i.type === type).reduce((s, i) => s + i.amount, 0),
+      lastMonth: lmIncome.filter((i) => i.type === type).reduce((s, i) => s + i.amount, 0),
+    }));
+
+    return {
+      tmLabel, lmLabel,
+      tmTotal, lmTotal,
+      tmServices: tmServices.length, lmServices: lmServices.length,
+      tmAtt, lmAtt,
+      tmMembers: tmMembers.length, lmMembers: lmMembers.length,
+      incomeBreakdown,
+    };
+  }, [income, services, members]);
+
   const churchName = profile.churchName || "GraceTrack Church";
   const pastorName = profile.pastorName || "Admin";
 
