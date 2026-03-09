@@ -155,6 +155,30 @@ export default function Reports() {
       lastMonth: lmIncome.filter((i) => i.type === type).reduce((s, i) => s + i.amount, 0),
     }));
 
+    // Weekly sparkline data (4 weeks per month)
+    const getWeeklyData = (monthStart: string, monthEnd: string, incomeArr: typeof income, servicesArr: typeof services) => {
+      const weeks: { week: string; income: number; attendance: number }[] = [];
+      const startDate = new Date(monthStart);
+      for (let w = 0; w < 4; w++) {
+        const wStart = new Date(startDate);
+        wStart.setDate(startDate.getDate() + w * 7);
+        const wEnd = new Date(startDate);
+        wEnd.setDate(startDate.getDate() + (w + 1) * 7 - 1);
+        if (w === 3) wEnd.setTime(new Date(monthEnd).getTime()); // last week extends to month end
+        const ws = wStart.toISOString().slice(0, 10);
+        const we = wEnd.toISOString().slice(0, 10);
+        weeks.push({
+          week: `W${w + 1}`,
+          income: incomeArr.filter((i) => i.date >= ws && i.date <= we).reduce((s, i) => s + i.amount, 0),
+          attendance: servicesArr.filter((s) => s.date >= ws && s.date <= we).reduce((s, sv) => s + sv.attendance, 0),
+        });
+      }
+      return weeks;
+    };
+
+    const tmWeekly = getWeeklyData(tmStart, tmEnd, tmIncome, tmServices);
+    const lmWeekly = getWeeklyData(lmStart, lmEnd, lmIncome, lmServices);
+
     return {
       tmLabel, lmLabel,
       tmTotal, lmTotal,
@@ -162,6 +186,7 @@ export default function Reports() {
       tmAtt, lmAtt,
       tmMembers: tmMembers.length, lmMembers: lmMembers.length,
       incomeBreakdown,
+      tmWeekly, lmWeekly,
     };
   }, [income, services, members]);
 
