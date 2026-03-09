@@ -7,12 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, FileText, Users, Church, Wallet, ClipboardList } from "lucide-react";
+import { Printer, FileText, Users, Church, Wallet, ClipboardList, ArrowLeftRight } from "lucide-react";
 import { useChurchProfile } from "@/hooks/useChurchProfile";
 import { useActivityLog } from "@/hooks/useActivityLog";
 
 type Period = "this_month" | "last_month" | "this_quarter" | "this_year" | "custom";
-type ReportType = "summary" | "income" | "attendance" | "members" | "contributions";
+type ReportType = "summary" | "comparison" | "income" | "attendance" | "members" | "contributions";
 
 function getPeriodRange(period: Period, customStart: string, customEnd: string) {
   const now = new Date();
@@ -124,6 +124,46 @@ export default function Reports() {
     return Object.entries(map).sort((a, b) => b[1].totalAtt - a[1].totalAtt);
   }, [periodServices]);
 
+  // ===== Comparison: This Month vs Last Month =====
+  const compData = useMemo(() => {
+    const now = new Date();
+    const tmStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const tmEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+    const lmStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
+    const lmEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
+
+    const tmIncome = income.filter((i) => i.date >= tmStart && i.date <= tmEnd);
+    const lmIncome = income.filter((i) => i.date >= lmStart && i.date <= lmEnd);
+    const tmServices = services.filter((s) => s.date >= tmStart && s.date <= tmEnd);
+    const lmServices = services.filter((s) => s.date >= lmStart && s.date <= lmEnd);
+    const tmMembers = members.filter((m) => m.dateJoined >= tmStart && m.dateJoined <= tmEnd);
+    const lmMembers = members.filter((m) => m.dateJoined >= lmStart && m.dateJoined <= lmEnd);
+
+    const tmTotal = tmIncome.reduce((s, i) => s + i.amount, 0);
+    const lmTotal = lmIncome.reduce((s, i) => s + i.amount, 0);
+    const tmAtt = tmServices.length > 0 ? Math.round(tmServices.reduce((s, sv) => s + sv.attendance, 0) / tmServices.length) : 0;
+    const lmAtt = lmServices.length > 0 ? Math.round(lmServices.reduce((s, sv) => s + sv.attendance, 0) / lmServices.length) : 0;
+
+    const tmLabel = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const lmDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lmLabel = lmDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+    const incomeBreakdown = INCOME_TYPES.map((type) => ({
+      type,
+      thisMonth: tmIncome.filter((i) => i.type === type).reduce((s, i) => s + i.amount, 0),
+      lastMonth: lmIncome.filter((i) => i.type === type).reduce((s, i) => s + i.amount, 0),
+    }));
+
+    return {
+      tmLabel, lmLabel,
+      tmTotal, lmTotal,
+      tmServices: tmServices.length, lmServices: lmServices.length,
+      tmAtt, lmAtt,
+      tmMembers: tmMembers.length, lmMembers: lmMembers.length,
+      incomeBreakdown,
+    };
+  }, [income, services, members]);
+
   const churchName = profile.churchName || "GraceTrack Church";
   const pastorName = profile.pastorName || "Admin";
 
@@ -176,10 +216,14 @@ export default function Reports() {
 
       {/* Report tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReportType)} className="no-print">
-        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-6 w-full max-w-3xl">
           <TabsTrigger value="summary" className="gap-1.5">
             <ClipboardList className="w-4 h-4" />
             <span className="hidden sm:inline">Summary</span>
+          </TabsTrigger>
+          <TabsTrigger value="comparison" className="gap-1.5">
+            <ArrowLeftRight className="w-4 h-4" />
+            <span className="hidden sm:inline">Compare</span>
           </TabsTrigger>
           <TabsTrigger value="income" className="gap-1.5">
             <Wallet className="w-4 h-4" />
@@ -375,7 +419,126 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* ========== INCOME TAB ========== */}
+      {/* ========== COMPARISON TAB ========== */}
+      <div className={activeTab !== "comparison" ? "hidden print-only" : ""}>
+        <div className="glass-card p-6 mb-4">
+          <h2 className="font-display font-bold text-xl mb-1">Month-over-Month Comparison</h2>
+          <p className="text-sm text-muted-foreground">{compData.lmLabel} vs {compData.tmLabel}</p>
+        </div>
+
+        {/* Key metrics side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="glass-card p-5">
+            <h3 className="font-display font-semibold text-base mb-4 text-muted-foreground">{compData.lmLabel}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{formatGHS(compData.lmTotal)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Total Income</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.lmServices}</p>
+                <p className="text-xs text-muted-foreground mt-1">Services</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.lmAtt}</p>
+                <p className="text-xs text-muted-foreground mt-1">Avg Attendance</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.lmMembers}</p>
+                <p className="text-xs text-muted-foreground mt-1">New Members</p>
+              </div>
+            </div>
+          </div>
+          <div className="glass-card p-5">
+            <h3 className="font-display font-semibold text-base mb-4 text-muted-foreground">{compData.tmLabel}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{formatGHS(compData.tmTotal)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Total Income</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.tmServices}</p>
+                <p className="text-xs text-muted-foreground mt-1">Services</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.tmAtt}</p>
+                <p className="text-xs text-muted-foreground mt-1">Avg Attendance</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.tmMembers}</p>
+                <p className="text-xs text-muted-foreground mt-1">New Members</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Change indicators */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+          {[
+            { label: "Income", curr: compData.tmTotal, prev: compData.lmTotal, fmt: true },
+            { label: "Services", curr: compData.tmServices, prev: compData.lmServices, fmt: false },
+            { label: "Avg Attendance", curr: compData.tmAtt, prev: compData.lmAtt, fmt: false },
+            { label: "New Members", curr: compData.tmMembers, prev: compData.lmMembers, fmt: false },
+          ].map((item) => {
+            const diff = item.prev > 0 ? ((item.curr - item.prev) / item.prev) * 100 : item.curr > 0 ? 100 : 0;
+            const isUp = diff > 0;
+            const isDown = diff < 0;
+            return (
+              <div key={item.label} className="glass-card p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">{item.label} Change</p>
+                <p className={`text-lg font-display font-bold ${isUp ? "text-green-600 dark:text-green-400" : isDown ? "text-red-500 dark:text-red-400" : "text-muted-foreground"}`}>
+                  {isUp ? "▲" : isDown ? "▼" : "–"} {Math.abs(diff).toFixed(1)}%
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Income breakdown comparison */}
+        <div className="glass-card overflow-hidden">
+          <div className="p-4 border-b border-border">
+            <h3 className="font-display font-semibold text-base">Income Breakdown Comparison</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-3 font-medium">Type</th>
+                  <th className="text-right p-3 font-medium">{compData.lmLabel}</th>
+                  <th className="text-right p-3 font-medium">{compData.tmLabel}</th>
+                  <th className="text-right p-3 font-medium">Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                {compData.incomeBreakdown.filter(r => r.thisMonth > 0 || r.lastMonth > 0).map((row) => {
+                  const diff = row.lastMonth > 0 ? ((row.thisMonth - row.lastMonth) / row.lastMonth) * 100 : row.thisMonth > 0 ? 100 : 0;
+                  const isUp = diff > 0;
+                  const isDown = diff < 0;
+                  return (
+                    <tr key={row.type} className="border-b border-border/50">
+                      <td className="p-3">{row.type}</td>
+                      <td className="p-3 text-right">{formatGHS(row.lastMonth)}</td>
+                      <td className="p-3 text-right">{formatGHS(row.thisMonth)}</td>
+                      <td className={`p-3 text-right font-medium ${isUp ? "text-green-600 dark:text-green-400" : isDown ? "text-red-500 dark:text-red-400" : "text-muted-foreground"}`}>
+                        {isUp ? "+" : ""}{diff.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+                <tr className="bg-muted/20 font-semibold">
+                  <td className="p-3">Total</td>
+                  <td className="p-3 text-right">{formatGHS(compData.lmTotal)}</td>
+                  <td className="p-3 text-right">{formatGHS(compData.tmTotal)}</td>
+                  <td className={`p-3 text-right ${compData.tmTotal >= compData.lmTotal ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>
+                    {compData.lmTotal > 0 ? `${((compData.tmTotal - compData.lmTotal) / compData.lmTotal * 100).toFixed(1)}%` : "–"}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div className={activeTab !== "income" ? "hidden print-only" : ""}>
         <div className="glass-card overflow-hidden">
           <div className="p-4 border-b border-border">
