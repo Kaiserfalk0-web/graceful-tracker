@@ -419,7 +419,126 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* ========== INCOME TAB ========== */}
+      {/* ========== COMPARISON TAB ========== */}
+      <div className={activeTab !== "comparison" ? "hidden print-only" : ""}>
+        <div className="glass-card p-6 mb-4">
+          <h2 className="font-display font-bold text-xl mb-1">Month-over-Month Comparison</h2>
+          <p className="text-sm text-muted-foreground">{compData.lmLabel} vs {compData.tmLabel}</p>
+        </div>
+
+        {/* Key metrics side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="glass-card p-5">
+            <h3 className="font-display font-semibold text-base mb-4 text-muted-foreground">{compData.lmLabel}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{formatGHS(compData.lmTotal)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Total Income</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.lmServices}</p>
+                <p className="text-xs text-muted-foreground mt-1">Services</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.lmAtt}</p>
+                <p className="text-xs text-muted-foreground mt-1">Avg Attendance</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.lmMembers}</p>
+                <p className="text-xs text-muted-foreground mt-1">New Members</p>
+              </div>
+            </div>
+          </div>
+          <div className="glass-card p-5">
+            <h3 className="font-display font-semibold text-base mb-4 text-muted-foreground">{compData.tmLabel}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{formatGHS(compData.tmTotal)}</p>
+                <p className="text-xs text-muted-foreground mt-1">Total Income</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.tmServices}</p>
+                <p className="text-xs text-muted-foreground mt-1">Services</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.tmAtt}</p>
+                <p className="text-xs text-muted-foreground mt-1">Avg Attendance</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-display font-bold text-primary">{compData.tmMembers}</p>
+                <p className="text-xs text-muted-foreground mt-1">New Members</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Change indicators */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+          {[
+            { label: "Income", curr: compData.tmTotal, prev: compData.lmTotal, fmt: true },
+            { label: "Services", curr: compData.tmServices, prev: compData.lmServices, fmt: false },
+            { label: "Avg Attendance", curr: compData.tmAtt, prev: compData.lmAtt, fmt: false },
+            { label: "New Members", curr: compData.tmMembers, prev: compData.lmMembers, fmt: false },
+          ].map((item) => {
+            const diff = item.prev > 0 ? ((item.curr - item.prev) / item.prev) * 100 : item.curr > 0 ? 100 : 0;
+            const isUp = diff > 0;
+            const isDown = diff < 0;
+            return (
+              <div key={item.label} className="glass-card p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">{item.label} Change</p>
+                <p className={`text-lg font-display font-bold ${isUp ? "text-green-600 dark:text-green-400" : isDown ? "text-red-500 dark:text-red-400" : "text-muted-foreground"}`}>
+                  {isUp ? "▲" : isDown ? "▼" : "–"} {Math.abs(diff).toFixed(1)}%
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Income breakdown comparison */}
+        <div className="glass-card overflow-hidden">
+          <div className="p-4 border-b border-border">
+            <h3 className="font-display font-semibold text-base">Income Breakdown Comparison</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-3 font-medium">Type</th>
+                  <th className="text-right p-3 font-medium">{compData.lmLabel}</th>
+                  <th className="text-right p-3 font-medium">{compData.tmLabel}</th>
+                  <th className="text-right p-3 font-medium">Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                {compData.incomeBreakdown.filter(r => r.thisMonth > 0 || r.lastMonth > 0).map((row) => {
+                  const diff = row.lastMonth > 0 ? ((row.thisMonth - row.lastMonth) / row.lastMonth) * 100 : row.thisMonth > 0 ? 100 : 0;
+                  const isUp = diff > 0;
+                  const isDown = diff < 0;
+                  return (
+                    <tr key={row.type} className="border-b border-border/50">
+                      <td className="p-3">{row.type}</td>
+                      <td className="p-3 text-right">{formatGHS(row.lastMonth)}</td>
+                      <td className="p-3 text-right">{formatGHS(row.thisMonth)}</td>
+                      <td className={`p-3 text-right font-medium ${isUp ? "text-green-600 dark:text-green-400" : isDown ? "text-red-500 dark:text-red-400" : "text-muted-foreground"}`}>
+                        {isUp ? "+" : ""}{diff.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+                <tr className="bg-muted/20 font-semibold">
+                  <td className="p-3">Total</td>
+                  <td className="p-3 text-right">{formatGHS(compData.lmTotal)}</td>
+                  <td className="p-3 text-right">{formatGHS(compData.tmTotal)}</td>
+                  <td className={`p-3 text-right ${compData.tmTotal >= compData.lmTotal ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>
+                    {compData.lmTotal > 0 ? `${((compData.tmTotal - compData.lmTotal) / compData.lmTotal * 100).toFixed(1)}%` : "–"}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div className={activeTab !== "income" ? "hidden print-only" : ""}>
         <div className="glass-card overflow-hidden">
           <div className="p-4 border-b border-border">
