@@ -12,7 +12,7 @@ import { useChurchProfile } from "@/hooks/useChurchProfile";
 import { useActivityLog } from "@/hooks/useActivityLog";
 
 type Period = "this_month" | "last_month" | "this_quarter" | "this_year" | "custom";
-type ReportType = "summary" | "income" | "attendance" | "members" | "contributions";
+type ReportType = "summary" | "comparison" | "income" | "attendance" | "members" | "contributions";
 
 function getPeriodRange(period: Period, customStart: string, customEnd: string) {
   const now = new Date();
