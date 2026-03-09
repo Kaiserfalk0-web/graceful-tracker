@@ -520,6 +520,90 @@ export default function Reports() {
           })}
         </div>
 
+        {/* Weekly Sparkline Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Income sparkline */}
+          <div className="glass-card p-5">
+            <h3 className="font-display font-semibold text-sm mb-3">Weekly Income Trend</h3>
+            <div className="h-32">
+              <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
+                <RechartsPrimitive.AreaChart>
+                  <RechartsPrimitive.XAxis dataKey="week" hide />
+                  <RechartsPrimitive.YAxis hide />
+                  <RechartsPrimitive.Tooltip
+                    formatter={(value: number) => formatGHS(value)}
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))" }}
+                  />
+                  <RechartsPrimitive.Area
+                    data={compData.lmWeekly}
+                    type="monotone"
+                    dataKey="income"
+                    stroke="hsl(var(--muted-foreground))"
+                    fill="hsl(var(--muted-foreground) / 0.1)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    name={compData.lmLabel}
+                    dot={false}
+                  />
+                  <RechartsPrimitive.Area
+                    data={compData.tmWeekly}
+                    type="monotone"
+                    dataKey="income"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary) / 0.15)"
+                    strokeWidth={2}
+                    name={compData.tmLabel}
+                    dot={false}
+                  />
+                  <RechartsPrimitive.Legend
+                    wrapperStyle={{ fontSize: 11 }}
+                  />
+                </RechartsPrimitive.AreaChart>
+              </RechartsPrimitive.ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Attendance sparkline */}
+          <div className="glass-card p-5">
+            <h3 className="font-display font-semibold text-sm mb-3">Weekly Attendance Trend</h3>
+            <div className="h-32">
+              <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
+                <RechartsPrimitive.AreaChart>
+                  <RechartsPrimitive.XAxis dataKey="week" hide />
+                  <RechartsPrimitive.YAxis hide />
+                  <RechartsPrimitive.Tooltip
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))" }}
+                  />
+                  <RechartsPrimitive.Area
+                    data={compData.lmWeekly}
+                    type="monotone"
+                    dataKey="attendance"
+                    stroke="hsl(var(--muted-foreground))"
+                    fill="hsl(var(--muted-foreground) / 0.1)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    name={compData.lmLabel}
+                    dot={false}
+                  />
+                  <RechartsPrimitive.Area
+                    data={compData.tmWeekly}
+                    type="monotone"
+                    dataKey="attendance"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary) / 0.15)"
+                    strokeWidth={2}
+                    name={compData.tmLabel}
+                    dot={false}
+                  />
+                  <RechartsPrimitive.Legend
+                    wrapperStyle={{ fontSize: 11 }}
+                  />
+                </RechartsPrimitive.AreaChart>
+              </RechartsPrimitive.ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
         {/* Income breakdown comparison */}
         <div className="glass-card overflow-hidden">
           <div className="p-4 border-b border-border">
