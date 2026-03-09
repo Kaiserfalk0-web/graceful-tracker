@@ -216,10 +216,14 @@ export default function Reports() {
 
       {/* Report tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ReportType)} className="no-print">
-        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-6 w-full max-w-3xl">
           <TabsTrigger value="summary" className="gap-1.5">
             <ClipboardList className="w-4 h-4" />
             <span className="hidden sm:inline">Summary</span>
+          </TabsTrigger>
+          <TabsTrigger value="comparison" className="gap-1.5">
+            <ArrowLeftRight className="w-4 h-4" />
+            <span className="hidden sm:inline">Compare</span>
           </TabsTrigger>
           <TabsTrigger value="income" className="gap-1.5">
             <Wallet className="w-4 h-4" />
