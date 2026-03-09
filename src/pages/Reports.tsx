@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import * as RechartsPrimitive from "recharts";
 import { useAppData } from "@/contexts/AppContext";
 import { INCOME_TYPES } from "@/types";
 import { formatGHS, formatDate } from "@/lib/format";
