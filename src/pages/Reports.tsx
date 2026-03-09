@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import * as RechartsPrimitive from "recharts";
 import { useAppData } from "@/contexts/AppContext";
 import { INCOME_TYPES } from "@/types";
 import { formatGHS, formatDate } from "@/lib/format";
@@ -154,6 +155,30 @@ export default function Reports() {
       lastMonth: lmIncome.filter((i) => i.type === type).reduce((s, i) => s + i.amount, 0),
     }));
 
+    // Weekly sparkline data (4 weeks per month)
+    const getWeeklyData = (monthStart: string, monthEnd: string, incomeArr: typeof income, servicesArr: typeof services) => {
+      const weeks: { week: string; income: number; attendance: number }[] = [];
+      const startDate = new Date(monthStart);
+      for (let w = 0; w < 4; w++) {
+        const wStart = new Date(startDate);
+        wStart.setDate(startDate.getDate() + w * 7);
+        const wEnd = new Date(startDate);
+        wEnd.setDate(startDate.getDate() + (w + 1) * 7 - 1);
+        if (w === 3) wEnd.setTime(new Date(monthEnd).getTime()); // last week extends to month end
+        const ws = wStart.toISOString().slice(0, 10);
+        const we = wEnd.toISOString().slice(0, 10);
+        weeks.push({
+          week: `W${w + 1}`,
+          income: incomeArr.filter((i) => i.date >= ws && i.date <= we).reduce((s, i) => s + i.amount, 0),
+          attendance: servicesArr.filter((s) => s.date >= ws && s.date <= we).reduce((s, sv) => s + sv.attendance, 0),
+        });
+      }
+      return weeks;
+    };
+
+    const tmWeekly = getWeeklyData(tmStart, tmEnd, tmIncome, tmServices);
+    const lmWeekly = getWeeklyData(lmStart, lmEnd, lmIncome, lmServices);
+
     return {
       tmLabel, lmLabel,
       tmTotal, lmTotal,
@@ -161,6 +186,7 @@ export default function Reports() {
       tmAtt, lmAtt,
       tmMembers: tmMembers.length, lmMembers: lmMembers.length,
       incomeBreakdown,
+      tmWeekly, lmWeekly,
     };
   }, [income, services, members]);
 
@@ -492,6 +518,90 @@ export default function Reports() {
               </div>
             );
           })}
+        </div>
+
+        {/* Weekly Sparkline Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Income sparkline */}
+          <div className="glass-card p-5">
+            <h3 className="font-display font-semibold text-sm mb-3">Weekly Income Trend</h3>
+            <div className="h-32">
+              <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
+                <RechartsPrimitive.AreaChart>
+                  <RechartsPrimitive.XAxis dataKey="week" hide />
+                  <RechartsPrimitive.YAxis hide />
+                  <RechartsPrimitive.Tooltip
+                    formatter={(value: number) => formatGHS(value)}
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))" }}
+                  />
+                  <RechartsPrimitive.Area
+                    data={compData.lmWeekly}
+                    type="monotone"
+                    dataKey="income"
+                    stroke="hsl(var(--muted-foreground))"
+                    fill="hsl(var(--muted-foreground) / 0.1)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    name={compData.lmLabel}
+                    dot={false}
+                  />
+                  <RechartsPrimitive.Area
+                    data={compData.tmWeekly}
+                    type="monotone"
+                    dataKey="income"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary) / 0.15)"
+                    strokeWidth={2}
+                    name={compData.tmLabel}
+                    dot={false}
+                  />
+                  <RechartsPrimitive.Legend
+                    wrapperStyle={{ fontSize: 11 }}
+                  />
+                </RechartsPrimitive.AreaChart>
+              </RechartsPrimitive.ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Attendance sparkline */}
+          <div className="glass-card p-5">
+            <h3 className="font-display font-semibold text-sm mb-3">Weekly Attendance Trend</h3>
+            <div className="h-32">
+              <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
+                <RechartsPrimitive.AreaChart>
+                  <RechartsPrimitive.XAxis dataKey="week" hide />
+                  <RechartsPrimitive.YAxis hide />
+                  <RechartsPrimitive.Tooltip
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))" }}
+                  />
+                  <RechartsPrimitive.Area
+                    data={compData.lmWeekly}
+                    type="monotone"
+                    dataKey="attendance"
+                    stroke="hsl(var(--muted-foreground))"
+                    fill="hsl(var(--muted-foreground) / 0.1)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    name={compData.lmLabel}
+                    dot={false}
+                  />
+                  <RechartsPrimitive.Area
+                    data={compData.tmWeekly}
+                    type="monotone"
+                    dataKey="attendance"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary) / 0.15)"
+                    strokeWidth={2}
+                    name={compData.tmLabel}
+                    dot={false}
+                  />
+                  <RechartsPrimitive.Legend
+                    wrapperStyle={{ fontSize: 11 }}
+                  />
+                </RechartsPrimitive.AreaChart>
+              </RechartsPrimitive.ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
         {/* Income breakdown comparison */}
