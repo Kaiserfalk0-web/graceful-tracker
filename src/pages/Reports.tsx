@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import * as RechartsPrimitive from "recharts";
 import { useAppData } from "@/contexts/AppContext";
 import { INCOME_TYPES } from "@/types";
@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, FileText, Users, Church, Wallet, ClipboardList, ArrowLeftRight } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Printer, FileText, Users, Church, Wallet, ClipboardList, ArrowLeftRight, Download } from "lucide-react";
 import { useChurchProfile } from "@/hooks/useChurchProfile";
 import { useActivityLog } from "@/hooks/useActivityLog";
+import { toast } from "sonner";
 
 type Period = "this_month" | "last_month" | "this_quarter" | "this_year" | "custom";
 type ReportType = "summary" | "comparison" | "income" | "attendance" | "members" | "contributions";
