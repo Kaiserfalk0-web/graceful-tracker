@@ -216,7 +216,7 @@ export default function Reports() {
     if (activeTab === "summary" || activeTab === "members") {
       rows.push([]);
       rows.push(["Member Name", "Phone", "Date Joined"]);
-      periodMembers.forEach(m => rows.push([m.name, m.phone, m.dateJoined]));
+      periodMembers.forEach(m => rows.push([m.fullName, m.phone, m.dateJoined]));
     }
     if (activeTab === "contributions") {
       rows.push(["Rank", "Member", "Total (GHS)"]);
