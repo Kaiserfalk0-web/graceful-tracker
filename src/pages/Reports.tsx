@@ -279,12 +279,24 @@ export default function Reports() {
             </div>
           </>
         )}
-        <Button variant="outline" onClick={() => {
-          addEntry(`Printed ${activeTab} report (${period})`, "report");
-          window.print();
-        }}>
-          <Printer className="w-4 h-4 mr-2" />Print Report
+        <Button variant="outline" onClick={handlePrintPDF}>
+          <Printer className="w-4 h-4 mr-2" />Print
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handlePrintPDF}>
+              <FileText className="w-4 h-4 mr-2" />Save as PDF (Print)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={generateCSV}>
+              <Download className="w-4 h-4 mr-2" />Download CSV
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Print header */}
