@@ -195,6 +195,61 @@ export default function Reports() {
   const churchName = profile.churchName || "GraceTrack Church";
   const pastorName = profile.pastorName || "Admin";
 
+  // === Export helpers ===
+  const generateCSV = useCallback(() => {
+    const rows: string[][] = [];
+    rows.push([`${churchName} — ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Report`]);
+    rows.push([`Period: ${periodLabel}`]);
+    rows.push([]);
+
+    if (activeTab === "summary" || activeTab === "income") {
+      rows.push(["Income Type", "Amount (GHS)", "%"]);
+      incomeByType.filter(r => r.total > 0).forEach(r => rows.push([r.type, r.total.toFixed(2), `${r.pct}%`]));
+      rows.push(["Total", grandTotal.toFixed(2), "100%"]);
+    }
+    if (activeTab === "summary" || activeTab === "attendance") {
+      rows.push([]);
+      rows.push(["Service Date", "Type", "Attendance"]);
+      periodServices.forEach(s => rows.push([s.date, s.type, String(s.attendance)]));
+      rows.push(["Average", "", String(avgAttendance)]);
+    }
+    if (activeTab === "summary" || activeTab === "members") {
+      rows.push([]);
+      rows.push(["Member Name", "Phone", "Date Joined"]);
+      periodMembers.forEach(m => rows.push([m.name, m.phone, m.dateJoined]));
+    }
+    if (activeTab === "contributions") {
+      rows.push(["Rank", "Member", "Total (GHS)"]);
+      topContributors.forEach((c, i) => rows.push([String(i + 1), c.name, c.total.toFixed(2)]));
+    }
+    if (activeTab === "comparison") {
+      rows.push(["Metric", compData.tmLabel, compData.lmLabel, "Change"]);
+      const pct = (a: number, b: number) => b > 0 ? `${(((a - b) / b) * 100).toFixed(1)}%` : "N/A";
+      rows.push(["Total Income", compData.tmTotal.toFixed(2), compData.lmTotal.toFixed(2), pct(compData.tmTotal, compData.lmTotal)]);
+      rows.push(["Services", String(compData.tmServices), String(compData.lmServices), pct(compData.tmServices, compData.lmServices)]);
+      rows.push(["Avg Attendance", String(compData.tmAtt), String(compData.lmAtt), pct(compData.tmAtt, compData.lmAtt)]);
+      rows.push(["New Members", String(compData.tmMembers), String(compData.lmMembers), pct(compData.tmMembers, compData.lmMembers)]);
+    }
+
+    const bom = "\uFEFF";
+    const csv = bom + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${churchName.replace(/\s+/g, "_")}_${activeTab}_${periodLabel.replace(/[\s–]/g, "_")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addEntry(`Exported ${activeTab} report as CSV`, "report");
+    toast.success("CSV downloaded successfully");
+  }, [activeTab, periodLabel, incomeByType, grandTotal, periodServices, avgAttendance, periodMembers, topContributors, compData, churchName, addEntry]);
+
+  const handlePrintPDF = useCallback(() => {
+    addEntry(`Exported ${activeTab} report as PDF (print)`, "report");
+    toast.info("Opening print dialog — choose 'Save as PDF' to download");
+    window.print();
+  }, [activeTab, addEntry]);
+
   return (
     <div className="space-y-6 fade-up">
       {/* Period selector */}
