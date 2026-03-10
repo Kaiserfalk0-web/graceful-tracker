@@ -1,4 +1,4 @@
-import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
+import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Church,
@@ -7,6 +7,7 @@ import {
   FileBarChart,
   UserCircle,
   Cross,
+  LogOut,
 } from "lucide-react";
 import { useAppData } from "@/contexts/AppContext";
 import { useChurchProfile } from "@/hooks/useChurchProfile";
