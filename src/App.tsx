@@ -11,9 +11,17 @@ import Finances from "@/pages/Finances";
 import Members from "@/pages/Members";
 import Reports from "@/pages/Reports";
 import Profile from "@/pages/Profile";
+import Login from "@/pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const auth = localStorage.getItem("gracetrack_auth");
+  const loggedIn = auth ? JSON.parse(auth).loggedIn : false;
+  if (!loggedIn) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -23,8 +31,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<Login />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route element={<Layout />}>
+            <Route element={<RequireAuth><Layout /></RequireAuth>}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/services" element={<Services />} />
               <Route path="/finances" element={<Finances />} />
