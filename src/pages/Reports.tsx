@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import * as RechartsPrimitive from "recharts";
 import { useAppData } from "@/contexts/AppContext";
 import { INCOME_TYPES } from "@/types";
@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, FileText, Users, Church, Wallet, ClipboardList, ArrowLeftRight } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Printer, FileText, Users, Church, Wallet, ClipboardList, ArrowLeftRight, Download } from "lucide-react";
 import { useChurchProfile } from "@/hooks/useChurchProfile";
 import { useActivityLog } from "@/hooks/useActivityLog";
+import { toast } from "sonner";
 
 type Period = "this_month" | "last_month" | "this_quarter" | "this_year" | "custom";
 type ReportType = "summary" | "comparison" | "income" | "attendance" | "members" | "contributions";
@@ -193,6 +195,61 @@ export default function Reports() {
   const churchName = profile.churchName || "GraceTrack Church";
   const pastorName = profile.pastorName || "Admin";
 
+  // === Export helpers ===
+  const generateCSV = useCallback(() => {
+    const rows: string[][] = [];
+    rows.push([`${churchName} — ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Report`]);
+    rows.push([`Period: ${periodLabel}`]);
+    rows.push([]);
+
+    if (activeTab === "summary" || activeTab === "income") {
+      rows.push(["Income Type", "Amount (GHS)", "%"]);
+      incomeByType.filter(r => r.total > 0).forEach(r => rows.push([r.type, r.total.toFixed(2), `${r.pct}%`]));
+      rows.push(["Total", grandTotal.toFixed(2), "100%"]);
+    }
+    if (activeTab === "summary" || activeTab === "attendance") {
+      rows.push([]);
+      rows.push(["Service Date", "Type", "Attendance"]);
+      periodServices.forEach(s => rows.push([s.date, s.type, String(s.attendance)]));
+      rows.push(["Average", "", String(avgAttendance)]);
+    }
+    if (activeTab === "summary" || activeTab === "members") {
+      rows.push([]);
+      rows.push(["Member Name", "Phone", "Date Joined"]);
+      periodMembers.forEach(m => rows.push([m.fullName, m.phone, m.dateJoined]));
+    }
+    if (activeTab === "contributions") {
+      rows.push(["Rank", "Member", "Total (GHS)"]);
+      topContributors.forEach((c, i) => rows.push([String(i + 1), c.name, c.total.toFixed(2)]));
+    }
+    if (activeTab === "comparison") {
+      rows.push(["Metric", compData.tmLabel, compData.lmLabel, "Change"]);
+      const pct = (a: number, b: number) => b > 0 ? `${(((a - b) / b) * 100).toFixed(1)}%` : "N/A";
+      rows.push(["Total Income", compData.tmTotal.toFixed(2), compData.lmTotal.toFixed(2), pct(compData.tmTotal, compData.lmTotal)]);
+      rows.push(["Services", String(compData.tmServices), String(compData.lmServices), pct(compData.tmServices, compData.lmServices)]);
+      rows.push(["Avg Attendance", String(compData.tmAtt), String(compData.lmAtt), pct(compData.tmAtt, compData.lmAtt)]);
+      rows.push(["New Members", String(compData.tmMembers), String(compData.lmMembers), pct(compData.tmMembers, compData.lmMembers)]);
+    }
+
+    const bom = "\uFEFF";
+    const csv = bom + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${churchName.replace(/\s+/g, "_")}_${activeTab}_${periodLabel.replace(/[\s–]/g, "_")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addEntry(`Exported ${activeTab} report as CSV`, "report");
+    toast.success("CSV downloaded successfully");
+  }, [activeTab, periodLabel, incomeByType, grandTotal, periodServices, avgAttendance, periodMembers, topContributors, compData, churchName, addEntry]);
+
+  const handlePrintPDF = useCallback(() => {
+    addEntry(`Exported ${activeTab} report as PDF (print)`, "report");
+    toast.info("Opening print dialog — choose 'Save as PDF' to download");
+    window.print();
+  }, [activeTab, addEntry]);
+
   return (
     <div className="space-y-6 fade-up">
       {/* Period selector */}
@@ -222,12 +279,24 @@ export default function Reports() {
             </div>
           </>
         )}
-        <Button variant="outline" onClick={() => {
-          addEntry(`Printed ${activeTab} report (${period})`, "report");
-          window.print();
-        }}>
-          <Printer className="w-4 h-4 mr-2" />Print Report
+        <Button variant="outline" onClick={handlePrintPDF}>
+          <Printer className="w-4 h-4 mr-2" />Print
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handlePrintPDF}>
+              <FileText className="w-4 h-4 mr-2" />Save as PDF (Print)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={generateCSV}>
+              <Download className="w-4 h-4 mr-2" />Download CSV
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Print header */}
